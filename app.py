@@ -758,6 +758,420 @@ def load_session():
             session.modified = True
             break
     return home()
+# ==================== NOUVELLES FONCTIONNALITÉS ====================
+import json
+import hashlib
+from datetime import datetime
 
+# ---------- Gestion des utilisateurs ----------
+USERS_FILE = "users.json"
+ALERTS_FILE = "alerts.json"
+
+def init_users():
+    if not os.path.exists(USERS_FILE):
+        users = {
+            "admin": hashlib.sha256("admin123".encode()).hexdigest(),
+            "demo": hashlib.sha256("demo".encode()).hexdigest()
+        }
+        with open(USERS_FILE, "w") as f:
+            json.dump(users, f)
+
+def check_user(username, password):
+    if not os.path.exists(USERS_FILE):
+        init_users()
+    with open(USERS_FILE, "r") as f:
+        users = json.load(f)
+    return username in users and users[username] == hashlib.sha256(password.encode()).hexdigest()
+
+def register_user(username, password):
+    if not os.path.exists(USERS_FILE):
+        users = {}
+    else:
+        with open(USERS_FILE, "r") as f:
+            users = json.load(f)
+    if username in users:
+        return False
+    users[username] = hashlib.sha256(password.encode()).hexdigest()
+    with open(USERS_FILE, "w") as f:
+        json.dump(users, f)
+    return True
+
+# ---------- Gestion des alertes ----------
+def save_alert(username, product_name, max_price):
+    alerts = {}
+    if os.path.exists(ALERTS_FILE):
+        with open(ALERTS_FILE, "r") as f:
+            alerts = json.load(f)
+    if username not in alerts:
+        alerts[username] = []
+    alerts[username].append({
+        "product": product_name,
+        "max_price": float(max_price),
+        "created": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+    with open(ALERTS_FILE, "w") as f:
+        json.dump(alerts, f)
+
+def get_alerts(username):
+    if os.path.exists(ALERTS_FILE):
+        with open(ALERTS_FILE, "r") as f:
+            alerts = json.load(f)
+        return alerts.get(username, [])
+    return []
+
+def check_alerts(username, product_name, price):
+    alerts = get_alerts(username)
+    triggered = []
+    for alert in alerts:
+        if alert["product"].lower() == product_name.lower() and price <= alert["max_price"]:
+            triggered.append(alert)
+    return triggered
+
+# ---------- Recherche et filtrage ----------
+def search_products(username, keyword=None, min_price=None, max_price=None):
+    results = []
+    if os.path.exists(FILE):
+        with open(FILE, "r", encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    parts = line.split('|')
+                    if len(parts) >= 4:
+                        session_id, timestamp, name, price = parts[:4]
+                        user = parts[4] if len(parts) > 4 else "unknown"
+                        if user != username:
+                            continue
+                        price = float(price)
+                        match = True
+                        if keyword and keyword.lower() not in name.lower():
+                            match = False
+                        if min_price and price < float(min_price):
+                            match = False
+                        if max_price and price > float(max_price):
+                            match = False
+                        if match:
+                            results.append({
+                                'session_id': session_id,
+                                'timestamp': timestamp,
+                                'name': name,
+                                'price': price
+                            })
+    return results
+
+# ---------- Comparaison de sessions ----------
+def compare_sessions(session_ids, username):
+    sessions_data = []
+    if os.path.exists(FILE):
+        data = {}
+        with open(FILE, "r", encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    parts = line.split('|')
+                    if len(parts) >= 4:
+                        sid, ts, name, price = parts[:4]
+                        user = parts[4] if len(parts) > 4 else "unknown"
+                        if user != username or sid not in session_ids:
+                            continue
+                        price = float(price)
+                        if sid not in data:
+                            data[sid] = {'prices': [], 'timestamp': ts, 'products': []}
+                        data[sid]['prices'].append(price)
+                        data[sid]['products'].append({'name': name, 'price': price})
+        for sid in session_ids:
+            if sid in data:
+                d = data[sid]
+                sessions_data.append({
+                    'session_id': sid,
+                    'timestamp': d['timestamp'],
+                    'count': len(d['prices']),
+                    'total': sum(d['prices']),
+                    'mean': sum(d['prices']) / len(d['prices']) if d['prices'] else 0,
+                    'products': d['products']
+                })
+    return sessions_data
+
+# ---------- Routes supplémentaires ----------
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        if check_user(username, password):
+            session['username'] = username
+            session['current_session'] = f"{username}_SESSION_{int(datetime.now().timestamp())}"
+            session['session_products'] = []
+            return redirect(url_for('home'))
+        return render_template_string(HTML_LOGIN, error="Identifiants incorrects")
+    return render_template_string(HTML_LOGIN)
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        confirm = request.form['confirm']
+        if password != confirm:
+            return render_template_string(HTML_REGISTER, error="Mots de passe différents")
+        if register_user(username, password):
+            return render_template_string(HTML_REGISTER, success="Inscription réussie ! Connectez-vous.")
+        return render_template_string(HTML_REGISTER, error="Utilisateur existe déjà")
+    return render_template_string(HTML_REGISTER)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+@app.route('/create_alert', methods=['POST'])
+def create_alert():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    product = request.form['product']
+    max_price = request.form['max_price']
+    save_alert(session['username'], product, max_price)
+    return redirect(url_for('home'))
+
+@app.route('/search_view')
+def search_view():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    keyword = request.args.get('keyword', '')
+    min_price = request.args.get('min_price', '')
+    max_price = request.args.get('max_price', '')
+    results = search_products(session['username'], keyword, min_price, max_price)
+    return render_template_string(HTML_SEARCH, results=results, keyword=keyword, min_price=min_price, max_price=max_price)
+
+@app.route('/compare_view')
+def compare_view():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    return render_template_string(HTML_COMPARE)
+
+@app.route('/compare_sessions', methods=['POST'])
+def compare_sessions_route():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    session1 = request.form['session1']
+    session2 = request.form['session2']
+    comparison = compare_sessions([session1, session2], session['username'])
+    return render_template_string(HTML_COMPARE, comparison=comparison, session1=session1, session2=session2)
+
+# ---------- Templates HTML supplémentaires ----------
+HTML_LOGIN = """
+<!DOCTYPE html>
+<html>
+<head><meta name="viewport" content="width=device-width, initial-scale=1"><title>Connexion</title>
+<style>
+body{font-family:sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;min-height:100vh}
+.login{background:white;padding:40px;border-radius:20px;width:300px}
+input{width:100%;padding:10px;margin:10px 0;border-radius:8px;border:1px solid #ddd}
+button{width:100%;padding:10px;background:#2e7d32;color:white;border:none;border-radius:8px;cursor:pointer}
+.error{color:red;margin:10px 0}
+</style>
+</head>
+<body>
+<div class=login>
+<h2>🔐 Eco-Prix</h2>
+{% if error %}<div class=error>{{ error }}</div>{% endif %}
+<form method=POST>
+<input type=text name=username placeholder="Nom d'utilisateur" required>
+<input type=password name=password placeholder="Mot de passe" required>
+<button type=submit>Connexion</button>
+</form>
+<p style=margin-top:15px><a href=/register>Créer un compte</a> | demo/demo</p>
+</div>
+</body>
+</html>
+"""
+
+HTML_REGISTER = """
+<!DOCTYPE html>
+<html>
+<head><meta name="viewport" content="width=device-width, initial-scale=1"><title>Inscription</title>
+<style>
+body{font-family:sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;min-height:100vh}
+.register{background:white;padding:40px;border-radius:20px;width:300px}
+input{width:100%;padding:10px;margin:10px 0;border-radius:8px;border:1px solid #ddd}
+button{width:100%;padding:10px;background:#2e7d32;color:white;border:none;border-radius:8px;cursor:pointer}
+.error{color:red}.success{color:green}
+</style>
+</head>
+<body>
+<div class=register>
+<h2>📝 Inscription</h2>
+{% if error %}<div class=error>{{ error }}</div>{% endif %}
+{% if success %}<div class=success>{{ success }}</div>{% endif %}
+<form method=POST>
+<input type=text name=username placeholder="Nom d'utilisateur" required>
+<input type=password name=password placeholder="Mot de passe" required>
+<input type=password name=confirm placeholder="Confirmer" required>
+<button type=submit>S'inscrire</button>
+</form>
+<p><a href=/login>Déjà inscrit ? Se connecter</a></p>
+</div>
+</body>
+</html>
+"""
+
+HTML_SEARCH = """
+<!DOCTYPE html>
+<html>
+<head><meta name="viewport" content="width=device-width, initial-scale=1"><title>Recherche</title>
+<style>
+body{font-family:sans-serif;background:#f4f4f4;padding:20px}
+.card{background:white;border-radius:15px;padding:20px;margin-bottom:20px}
+input,button{padding:10px;margin:5px;border-radius:8px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;text-align:left;border-bottom:1px solid #ddd}
+</style>
+</head>
+<body>
+<div class=card>
+<h2>🔍 Recherche de produits</h2>
+<form method=GET>
+<input type=text name=keyword placeholder="Nom du produit" value="{{ keyword }}">
+<input type=number name=min_price placeholder="Prix min" value="{{ min_price }}">
+<input type=number name=max_price placeholder="Prix max" value="{{ max_price }}">
+<button type=submit>Rechercher</button>
+<a href="/"><button type=button>Retour</button></a>
+</form>
+</div>
+{% if results %}
+<div class=card>
+<h3>Résultats ({{ results|length }})</h3>
+<table>
+<tr><th>Produit</th><th>Prix</th><th>Session</th><th>Date</th></tr>
+{% for r in results %}
+<tr><td>{{ r.name }}</td><td>{{ "%.0f"|format(r.price) }} FCFA</td><td>{{ r.session_id }}</td><td>{{ r.timestamp }}</td></tr>
+{% endfor %}
+</table>
+</div>
+{% endif %}
+</body>
+</html>
+"""
+
+HTML_COMPARE = """
+<!DOCTYPE html>
+<html>
+<head><meta name="viewport" content="width=device-width, initial-scale=1"><title>Comparaison</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body{font-family:sans-serif;background:#f4f4f4;padding:20px}
+.card{background:white;border-radius:15px;padding:20px;margin-bottom:20px}
+select,button{padding:10px;margin:5px;border-radius:8px}
+canvas{max-width:100%}
+</style>
+</head>
+<body>
+<div class=card>
+<h2>📊 Comparer deux sessions</h2>
+<form method=POST action="/compare_sessions">
+<select name="session1" required>
+<option value="">Session 1</option>
+{% for h in history %}
+<option value="{{ h.session_id }}">{{ h.session_id }} - {{ h.timestamp[:10] }}</option>
+{% endfor %}
+</select>
+<select name="session2" required>
+<option value="">Session 2</option>
+{% for h in history %}
+<option value="{{ h.session_id }}">{{ h.session_id }} - {{ h.timestamp[:10] }}</option>
+{% endfor %}
+</select>
+<button type=submit>Comparer</button>
+<a href="/"><button type=button>Retour</button></a>
+</form>
+</div>
+{% if comparison %}
+<div class=card>
+<h3>Comparaison: {{ session1 }} vs {{ session2 }}</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+<div style="background:#e8f5e9;padding:20px;border-radius:10px">
+<h4>{{ session1 }}</h4>
+<p>Articles: {{ comparison[0].count }}</p>
+<p>Total: {{ "%.0f"|format(comparison[0].total) }} FCFA</p>
+<p>Moyenne: {{ "%.0f"|format(comparison[0].mean) }} FCFA</p>
+</div>
+<div style="background:#fff3e0;padding:20px;border-radius:10px">
+<h4>{{ session2 }}</h4>
+<p>Articles: {{ comparison[1].count }}</p>
+<p>Total: {{ "%.0f"|format(comparison[1].total) }} FCFA</p>
+<p>Moyenne: {{ "%.0f"|format(comparison[1].mean) }} FCFA</p>
+</div>
+</div>
+<canvas id="compareChart" style="margin-top:20px"></canvas>
+</div>
+<script>
+new Chart(document.getElementById('compareChart'), {
+    type: 'bar',
+    data: {
+        labels: ['{{ session1 }}', '{{ session2 }}'],
+        datasets: [{
+            label: 'Prix moyen (FCFA)',
+            data: [{{ comparison[0].mean }}, {{ comparison[1].mean }}],
+            backgroundColor: ['#2e7d32', '#ff9800']
+        }]
+    }
+});
+</script>
+{% endif %}
+</body>
+</html>
+"""
+
+# Modifier la route home pour inclure les nouvelles fonctionnalités
+@app.route('/')
+def home_enhanced():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    
+    username = session['username']
+    
+    if request.method == 'POST' and 'p' in request.form:
+        with open(FILE, "a") as f:
+            f.write(f"{session.get('current_session', 'default')}|{datetime.now()}|{request.form['p']}|{request.form['v']}|{username}\n")
+    
+    info = "<i>Aucune donnée enregistrée.</i>"
+    session_products = []
+    
+    if os.path.exists(FILE):
+        with open(FILE, "r") as f:
+            for line in f:
+                parts = line.strip().split('|')
+                if len(parts) >= 4 and parts[4] == username and parts[0] == session.get('current_session', ''):
+                    session_products.append({'name': parts[2], 'price': float(parts[3])})
+    
+    if session_products:
+        prix = [p['price'] for p in session_products]
+        moyenne = sum(prix) / len(prix)
+        variance = sum((x - moyenne) ** 2 for x in prix) / len(prix)
+        info = f"""
+        <b>Articles :</b> {len(prix)}<br>
+        <b>Moyenne :</b> {moyenne:.0f} FCFA<br>
+        <b>Max :</b> {max(prix):.0f} FCFA<br>
+        <b>Variance :</b> {variance:.2f}
+        """
+    
+    history = load_history_from_file(username)
+    alerts = get_alerts(username)
+    
+    # Ajouter les liens vers les nouvelles pages
+    extra_links = """
+    <div style="margin-top:15px; display:flex; gap:10px; flex-wrap:wrap;">
+        <a href="/search_view" style="background:#2196f3; color:white; padding:8px 15px; border-radius:8px; text-decoration:none;">🔍 Rechercher</a>
+        <a href="/compare_view" style="background:#ff9800; color:white; padding:8px 15px; border-radius:8px; text-decoration:none;">📊 Comparer sessions</a>
+        <a href="/logout" style="background:#f44336; color:white; padding:8px 15px; border-radius:8px; text-decoration:none;">🚪 Déconnexion</a>
+    </div>
+    """
+    
+    return render_template_string(HTML.replace('</body>', extra_links + '</body>'), info=info)
+
+# Initialiser les utilisateurs
+init_users()
+
+print("✅ Nouvelles fonctionnalités ajoutées !")
+print("📝 Comptes par défaut : admin/admin123 | demo/demo")
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
