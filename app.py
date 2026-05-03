@@ -21,6 +21,832 @@ CATEGORIES = [
 ]
 CAT_MAP = {c["id"]: c for c in CATEGORIES}
 
+MARKETS_YAOUNDE = [
+    "Marché Central (Mokolo)",
+    "Marché du Mfoundi",
+    "Marché d'Essos",
+    "Marché de Biyem-Assi",
+    "Marché de Mvog-Ada",
+    "Marché de Nsam",
+    "Marché de Nkol-Eton",
+    "Marché de Cité Verte",
+    "Marché de Melen",
+    "Marché de Mendong",
+    "Marché de Kondengui",
+    "Marché de Djoungolo",
+    "Marché de Nkoldongo",
+    "Marché d'Ahala",
+    "Marché de Carrière",
+    "Marché de Ngoa-Ekelle",
+    "Marché de Simbock",
+    "Marché de Ekounou",
+    "Marché de Mvog-Mbi",
+    "Marché de Obili",
+]
+
+REGISTER_HTML = """
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eco-Prix Yaoundé – Bienvenue</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --green-deep:  #0a3d20;
+            --green-mid:   #166534;
+            --green-vivid: #22c55e;
+            --green-light: #bbf7d0;
+            --gold:        #f59e0b;
+            --gold-light:  #fde68a;
+            --cream:       #fffbeb;
+            --white:       #ffffff;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background: linear-gradient(160deg, #0a3d20 0%, #14532d 35%, #166534 65%, #15803d 100%);
+            position: relative;
+        }
+
+        /* ===== CANVAS PARTICLES ===== */
+        #particles-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ===== FLOATING FLOWERS ===== */
+        .flowers-layer {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .flower {
+            position: absolute;
+            font-size: 28px;
+            animation: floatFlower linear infinite;
+            opacity: 0;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2));
+            user-select: none;
+        }
+
+        @keyframes floatFlower {
+            0%   { opacity: 0; transform: translateY(110vh) rotate(0deg) scale(0.5); }
+            8%   { opacity: 0.9; }
+            90%  { opacity: 0.7; }
+            100% { opacity: 0; transform: translateY(-15vh) rotate(720deg) scale(1.1); }
+        }
+
+        /* ===== GLITTER SPARKS ===== */
+        .spark {
+            position: absolute;
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: sparkle ease-in-out infinite;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+            50%       { opacity: 1; transform: scale(1) rotate(180deg); }
+        }
+
+        /* ===== LIGHT RAYS ===== */
+        .rays {
+            position: fixed;
+            top: -20%; left: 50%;
+            transform: translateX(-50%);
+            width: 200%; height: 120%;
+            background: conic-gradient(
+                from 0deg at 50% 0%,
+                transparent 0deg,
+                rgba(34,197,94,0.04) 10deg,
+                transparent 20deg,
+                rgba(245,158,11,0.03) 30deg,
+                transparent 40deg,
+                rgba(34,197,94,0.04) 50deg,
+                transparent 60deg,
+                rgba(255,255,255,0.02) 70deg,
+                transparent 80deg,
+                rgba(34,197,94,0.03) 90deg,
+                transparent 100deg,
+                transparent 360deg
+            );
+            animation: rotateRays 40s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes rotateRays { to { transform: translateX(-50%) rotate(360deg); } }
+
+        /* ===== MAIN CONTAINER ===== */
+        .page-wrap {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px 60px;
+        }
+
+        .register-card {
+            width: 100%;
+            max-width: 680px;
+            background: rgba(255,255,255,0.96);
+            backdrop-filter: blur(24px);
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow:
+                0 40px 80px rgba(0,0,0,0.35),
+                0 0 0 1px rgba(255,255,255,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.8);
+            animation: cardEntrance 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes cardEntrance {
+            from { opacity: 0; transform: translateY(60px) scale(0.94); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* ===== CARD HEADER ===== */
+        .card-header {
+            background: linear-gradient(135deg, #0a3d20 0%, #166534 50%, #16a34a 100%);
+            padding: 44px 44px 36px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-header::before {
+            content: '';
+            position: absolute;
+            top: -40px; right: -40px;
+            width: 200px; height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(245,158,11,0.18) 0%, transparent 70%);
+        }
+
+        .card-header::after {
+            content: '';
+            position: absolute;
+            bottom: -30px; left: -30px;
+            width: 160px; height: 160px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(34,197,94,0.15) 0%, transparent 70%);
+        }
+
+        .logo-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px; height: 80px;
+            background: linear-gradient(135deg, var(--gold), #fbbf24);
+            border-radius: 50%;
+            font-size: 38px;
+            margin-bottom: 18px;
+            box-shadow: 0 8px 24px rgba(245,158,11,0.4), 0 0 0 4px rgba(255,255,255,0.2);
+            animation: logoPulse 3s ease-in-out infinite;
+            position: relative;
+            z-index: 2;
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { box-shadow: 0 8px 24px rgba(245,158,11,0.4), 0 0 0 4px rgba(255,255,255,0.2); }
+            50%       { box-shadow: 0 8px 32px rgba(245,158,11,0.6), 0 0 0 8px rgba(255,255,255,0.1); }
+        }
+
+        .header-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: white;
+            line-height: 1.1;
+            margin-bottom: 8px;
+            position: relative; z-index: 2;
+        }
+
+        .header-subtitle {
+            font-size: 0.92rem;
+            color: rgba(255,255,255,0.75);
+            font-weight: 500;
+            position: relative; z-index: 2;
+        }
+
+        .header-deco {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 18px;
+            position: relative; z-index: 2;
+        }
+
+        .deco-pill {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.85);
+            backdrop-filter: blur(10px);
+        }
+
+        /* ===== FORM BODY ===== */
+        .card-body {
+            padding: 40px 44px 44px;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--green-deep);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--green-light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i { color: var(--green-vivid); font-size: 1rem; }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .form-grid.one-col { grid-template-columns: 1fr; }
+
+        .field-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field-wrap.full { grid-column: 1 / -1; }
+
+        label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--green-deep);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        label i { color: var(--green-vivid); font-size: 0.85rem; }
+
+        input[type=text],
+        input[type=tel],
+        input[type=email],
+        input[type=number],
+        select,
+        textarea {
+            width: 100%;
+            padding: 13px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 14px;
+            font-size: 0.92rem;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 500;
+            color: #111827;
+            background: #f9fafb;
+            transition: all 0.25s ease;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--green-vivid);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(34,197,94,0.12);
+            transform: translateY(-1px);
+        }
+
+        select { cursor: pointer; }
+        textarea { resize: vertical; min-height: 80px; }
+
+        /* ===== GENDER RADIO ===== */
+        .gender-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .gender-opt {
+            flex: 1;
+            position: relative;
+        }
+
+        .gender-opt input[type=radio] { display: none; }
+
+        .gender-opt label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 14px;
+            cursor: pointer;
+            background: #f9fafb;
+            font-size: 0.88rem;
+            text-transform: none;
+            letter-spacing: 0;
+            font-weight: 600;
+            transition: all 0.2s;
+            color: #6b7280;
+        }
+
+        .gender-opt input:checked + label {
+            border-color: var(--green-vivid);
+            background: #f0fdf4;
+            color: var(--green-deep);
+            box-shadow: 0 0 0 3px rgba(34,197,94,0.12);
+        }
+
+        /* ===== MARKET CARDS ===== */
+        .market-select-wrap {
+            position: relative;
+        }
+
+        .market-select-wrap::after {
+            content: '\\f3c5';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 14px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--green-vivid);
+            pointer-events: none;
+        }
+
+        /* ===== DIVIDER ===== */
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--green-light), transparent);
+            margin: 28px 0;
+        }
+
+        /* ===== SUBMIT BUTTON ===== */
+        .btn-submit {
+            width: 100%;
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 1.05rem;
+            font-weight: 800;
+            font-family: 'Nunito', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: 0 6px 20px rgba(22,163,74,0.35);
+            letter-spacing: 0.3px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-submit::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-submit:hover::before { left: 100%; }
+
+        .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 28px rgba(22,163,74,0.45);
+        }
+
+        .btn-submit:active { transform: translateY(-1px); }
+
+        /* ===== ALREADY REGISTERED ===== */
+        .already-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.88rem;
+            color: #6b7280;
+        }
+
+        .already-link a {
+            color: var(--green-mid);
+            font-weight: 700;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .already-link a:hover { color: var(--green-vivid); }
+
+        /* ===== DECORATIVE CORNER FLOWERS ===== */
+        .corner-deco {
+            position: absolute;
+            font-size: 36px;
+            opacity: 0.18;
+            pointer-events: none;
+        }
+
+        .corner-deco.tl { top: 10px; left: 10px; transform: rotate(-20deg); }
+        .corner-deco.tr { top: 10px; right: 10px; transform: rotate(20deg); }
+        .corner-deco.bl { bottom: 10px; left: 10px; transform: rotate(15deg); }
+        .corner-deco.br { bottom: 10px; right: 10px; transform: rotate(-15deg); }
+
+        /* ===== FOOTER BADGE ===== */
+        .eco-badge {
+            text-align: center;
+            margin-top: 32px;
+            animation: cardEntrance 1.2s 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .eco-badge span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 30px;
+            padding: 8px 20px;
+            color: rgba(255,255,255,0.75);
+            font-size: 0.8rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+        }
+
+        /* ===== ERROR & SUCCESS ===== */
+        .alert-form {
+            border-radius: 14px;
+            padding: 12px 18px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-success { background: #dcfce7; color: #166534; border-left: 4px solid #22c55e; }
+        .alert-error   { background: #fee2e2; color: #991b1b; border-left: 4px solid #ef4444; }
+
+        /* ===== FLOATING MARKET TAG ===== */
+        .market-tag {
+            position: fixed;
+            top: 24px; right: 24px;
+            background: rgba(245,158,11,0.92);
+            border-radius: 20px;
+            padding: 10px 18px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #451a03;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 16px rgba(245,158,11,0.3);
+            z-index: 50;
+            animation: tagBounce 2s ease-in-out infinite;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        @keyframes tagBounce {
+            0%, 100% { transform: translateY(0); }
+            50%       { transform: translateY(-5px); }
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 600px) {
+            .card-header { padding: 32px 24px 28px; }
+            .card-body   { padding: 28px 24px 32px; }
+            .form-grid   { grid-template-columns: 1fr; }
+            .header-title { font-size: 1.6rem; }
+            .market-tag { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Canvas particules / paillettes -->
+<canvas id="particles-canvas"></canvas>
+
+<!-- Rayons lumineux -->
+<div class="rays"></div>
+
+<!-- Fleurs flottantes -->
+<div class="flowers-layer" id="flowers-layer"></div>
+
+<!-- Tag marché flottant -->
+<div class="market-tag">
+    <span>🛒</span> Marchés de Yaoundé
+</div>
+
+<!-- ===== PAGE ===== -->
+<div class="page-wrap">
+    <div style="width:100%; max-width:680px;">
+
+        <!-- CARD PRINCIPALE -->
+        <div class="register-card" style="position:relative;">
+
+            <!-- Fleurs décoratives coins -->
+            <div class="corner-deco tl">🌸</div>
+            <div class="corner-deco tr">🌺</div>
+            <div class="corner-deco bl">🌼</div>
+            <div class="corner-deco br">🌻</div>
+
+            <!-- HEADER -->
+            <div class="card-header">
+                <div class="logo-badge">🌿</div>
+                <h1 class="header-title">Eco-Prix Yaoundé</h1>
+                <p class="header-subtitle">Système intelligent de gestion des prix du marché</p>
+                <div class="header-deco">
+                    <span class="deco-pill">🍃 Eco-responsable</span>
+                    <span class="deco-pill">🏪 Marchés locaux</span>
+                    <span class="deco-pill">📊 Analyse des prix</span>
+                </div>
+            </div>
+
+            <!-- BODY FORMULAIRE -->
+            <div class="card-body">
+
+                {% if message %}
+                <div class="alert-form alert-{{ message.type }}">
+                    <i class="fas fa-{{ 'check-circle' if message.type == 'success' else 'exclamation-circle' }}"></i>
+                    {{ message.text }}
+                </div>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('register') }}">
+
+                    <!-- SECTION 1 : Identité -->
+                    <div class="section-title">
+                        <i class="fas fa-user-circle"></i> Informations personnelles
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="field-wrap">
+                            <label><i class="fas fa-id-card"></i> Nom</label>
+                            <input type="text" name="nom" placeholder="Votre nom" value="{{ form_data.nom or '' }}" required>
+                        </div>
+                        <div class="field-wrap">
+                            <label><i class="fas fa-id-badge"></i> Prénom(s)</label>
+                            <input type="text" name="prenom" placeholder="Votre prénom" value="{{ form_data.prenom or '' }}" required>
+                        </div>
+                        <div class="field-wrap">
+                            <label><i class="fas fa-calendar-alt"></i> Date de naissance</label>
+                            <input type="text" name="ddn" placeholder="JJ/MM/AAAA" value="{{ form_data.ddn or '' }}">
+                        </div>
+                        <div class="field-wrap">
+                            <label><i class="fas fa-venus-mars"></i> Sexe</label>
+                            <div class="gender-group">
+                                <div class="gender-opt">
+                                    <input type="radio" name="sexe" id="homme" value="Homme" {{ 'checked' if form_data.sexe == 'Homme' else '' }}>
+                                    <label for="homme"><i class="fas fa-mars"></i> Homme</label>
+                                </div>
+                                <div class="gender-opt">
+                                    <input type="radio" name="sexe" id="femme" value="Femme" {{ 'checked' if form_data.sexe == 'Femme' else '' }}>
+                                    <label for="femme"><i class="fas fa-venus"></i> Femme</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <!-- SECTION 2 : Contact -->
+                    <div class="section-title">
+                        <i class="fas fa-address-book"></i> Coordonnées de contact
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="field-wrap">
+                            <label><i class="fas fa-phone"></i> Téléphone</label>
+                            <input type="tel" name="telephone" placeholder="6XX XXX XXX" value="{{ form_data.telephone or '' }}" required>
+                        </div>
+                        <div class="field-wrap">
+                            <label><i class="fas fa-envelope"></i> Email (optionnel)</label>
+                            <input type="email" name="email" placeholder="votre@email.com" value="{{ form_data.email or '' }}">
+                        </div>
+                        <div class="field-wrap full">
+                            <label><i class="fas fa-map-marker-alt"></i> Quartier de résidence</label>
+                            <input type="text" name="quartier" placeholder="Ex: Bastos, Nlongkak, Melen…" value="{{ form_data.quartier or '' }}">
+                        </div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <!-- SECTION 3 : Session marché -->
+                    <div class="section-title">
+                        <i class="fas fa-store"></i> Session d'achat au marché
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="field-wrap full">
+                            <label><i class="fas fa-map-marked-alt"></i> Marché de Yaoundé</label>
+                            <div class="market-select-wrap">
+                                <select name="marche" required>
+                                    <option value="" disabled {{ 'selected' if not form_data.marche else '' }}>
+                                        🏪 Choisir le marché…
+                                    </option>
+                                    {% for m in markets %}
+                                    <option value="{{ m }}" {{ 'selected' if form_data.marche == m else '' }}>
+                                        {{ m }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="field-wrap">
+                            <label><i class="fas fa-calendar-check"></i> Date de visite</label>
+                            <input type="text" name="date_visite" placeholder="JJ/MM/AAAA" value="{{ form_data.date_visite or '' }}">
+                        </div>
+                        <div class="field-wrap">
+                            <label><i class="fas fa-wallet"></i> Budget prévu (FCFA)</label>
+                            <input type="number" name="budget" placeholder="Ex: 25000" step="500" min="0" value="{{ form_data.budget or '' }}">
+                        </div>
+                        <div class="field-wrap full">
+                            <label><i class="fas fa-align-left"></i> Objectif de la visite (optionnel)</label>
+                            <textarea name="objectif" placeholder="Ex: Achats alimentaires du mois, matériaux pour construction…">{{ form_data.objectif or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- SUBMIT -->
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-leaf"></i>
+                        Démarrer ma session Eco-Prix
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+
+                <p class="already-link">
+                    Déjà enregistré ?
+                    <a href="{{ url_for('home') }}">Accéder au tableau de bord →</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Badge écologie bas de page -->
+        <div class="eco-badge">
+            <span>🌍 Eco-Prix Yaoundé &nbsp;|&nbsp; TP INF232 &nbsp;|&nbsp; 2024-2025</span>
+        </div>
+    </div>
+</div>
+
+<!-- ===== ANIMATIONS JS ===== -->
+<script>
+// ---- Fleurs flottantes ----
+const FLOWERS = ['🌸','🌺','🌼','🌻','🌹','🌷','💐','🍃','🌿','🍀','🌱','✿'];
+const layer = document.getElementById('flowers-layer');
+
+function createFlower() {
+    const el = document.createElement('div');
+    el.className = 'flower';
+    el.textContent = FLOWERS[Math.floor(Math.random() * FLOWERS.length)];
+    const size = 18 + Math.random() * 22;
+    el.style.fontSize = size + 'px';
+    el.style.left = (Math.random() * 100) + 'vw';
+    el.style.bottom = '-60px';
+    const dur = 9 + Math.random() * 12;
+    el.style.animationDuration = dur + 's';
+    el.style.animationDelay = (Math.random() * 4) + 's';
+    layer.appendChild(el);
+    setTimeout(() => el.remove(), (dur + 4) * 1000);
+}
+
+// Lancement initial
+for (let i = 0; i < 14; i++) {
+    setTimeout(createFlower, i * 700);
+}
+// Boucle continue
+setInterval(createFlower, 1200);
+
+// ---- Paillettes canvas ----
+const canvas = document.getElementById('particles-canvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const COLORS = ['#22c55e','#f59e0b','#ffffff','#bbf7d0','#fde68a','#84cc16','#34d399'];
+
+class Particle {
+    constructor() { this.reset(); }
+
+    reset() {
+        this.x  = Math.random() * canvas.width;
+        this.y  = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.6;
+        this.vy = -Math.random() * 0.8 - 0.2;
+        this.r  = Math.random() * 3 + 1;
+        this.alpha = Math.random() * 0.6 + 0.2;
+        this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+        this.shape = Math.random() > 0.5 ? 'circle' : 'diamond';
+        this.life  = 0;
+        this.maxLife = 120 + Math.random() * 180;
+        this.rotation = Math.random() * Math.PI * 2;
+        this.rotSpeed = (Math.random() - 0.5) * 0.08;
+    }
+
+    update() {
+        this.x  += this.vx;
+        this.y  += this.vy;
+        this.rotation += this.rotSpeed;
+        this.life++;
+        if (this.life > this.maxLife || this.y < -10) this.reset();
+    }
+
+    draw() {
+        const progress = this.life / this.maxLife;
+        const a = this.alpha * (1 - Math.pow(progress - 0.5, 2) * 4);
+        if (a <= 0) return;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, a);
+        ctx.fillStyle   = this.color;
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+
+        if (this.shape === 'diamond') {
+            ctx.beginPath();
+            ctx.moveTo(0, -this.r * 1.5);
+            ctx.lineTo(this.r, 0);
+            ctx.lineTo(0, this.r * 1.5);
+            ctx.lineTo(-this.r, 0);
+            ctx.closePath();
+            ctx.fill();
+        } else {
+            // Étoile / paillette
+            const spikes = 4;
+            for (let i = 0; i < spikes * 2; i++) {
+                const angle = (i * Math.PI) / spikes;
+                const rad   = i % 2 === 0 ? this.r * 1.5 : this.r * 0.5;
+                if (i === 0) ctx.beginPath(), ctx.moveTo(Math.cos(angle)*rad, Math.sin(angle)*rad);
+                else ctx.lineTo(Math.cos(angle)*rad, Math.sin(angle)*rad);
+            }
+            ctx.closePath();
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+}
+
+const particles = Array.from({length: 90}, () => new Particle());
+
+function animateParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => { p.update(); p.draw(); });
+    requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+// ---- Effet hover sur les inputs ----
+document.querySelectorAll('input, select, textarea').forEach(el => {
+    el.addEventListener('focus', () => {
+        el.closest('.field-wrap').style.transform = 'scale(1.01)';
+    });
+    el.addEventListener('blur', () => {
+        el.closest('.field-wrap').style.transform = '';
+    });
+});
+
+// ---- Date auto aujourd'hui ----
+const today = new Date();
+const dd = String(today.getDate()).padStart(2, '0');
+const mm = String(today.getMonth() + 1).padStart(2, '0');
+const yyyy = today.getFullYear();
+const dateField = document.querySelector('[name=date_visite]');
+if (dateField && !dateField.value) {
+    dateField.value = dd + '/' + mm + '/' + yyyy;
+}
+</script>
+</body>
+</html>
+"""
+
 # ============ TEMPLATE HTML PRINCIPAL ============
 HTML = """
 <!DOCTYPE html>
@@ -528,10 +1354,18 @@ HTML = """
     </ul>
 
     <div class="session-pill">
-        <div class="s-label">Session active</div>
-        <div class="s-id">{{ session_id }}</div>
-        <div class="s-count"><i class="fas fa-boxes"></i> {{ session_count }} produit(s)</div>
-    </div>
+            <div class="s-label">👤 Client</div>
+            <div class="s-id" style="font-size:0.9rem;">{{ client.prenom or '–' }} {{ client.nom or '' }}</div>
+            <div class="s-count" style="margin-top:4px;"><i class="fas fa-store"></i> {{ client.marche or 'Marché non défini' }}</div>
+            {% if client.budget %}
+            <div class="s-count"><i class="fas fa-wallet"></i> Budget : {{ client.budget }} FCFA</div>
+            {% endif %}
+        </div>
+        <div style="margin-top:10px;">
+            <a href="{{ url_for('logout') }}" style="display:flex; align-items:center; gap:8px; padding:10px 16px; border-radius:12px; color:rgba(255,255,255,0.5); font-size:0.82rem; text-decoration:none; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.18)';this.style.color='#fca5a5'" onmouseout="this.style.background='';this.style.color='rgba(255,255,255,0.5)'">
+                <i class="fas fa-sign-out-alt"></i> Se déconnecter
+            </a>
+        </div>
 </nav>
 
 <!-- ====== MOBILE NAV ====== -->
@@ -650,11 +1484,17 @@ HTML = """
                 <div class="card-title"><i class="fas fa-plus-circle"></i> Ajouter un produit</div>
                 <form method="POST" action="{{ url_for('add_product') }}">
                     <div class="form-row" style="margin-bottom:12px;">
-                        <input type="text" name="product" placeholder="🏷️ Nom du produit" required>
+                        <input type="text" id="product-input" name="product" placeholder="🏷️ Nom du produit" required autocomplete="off">
                         <input type="number" name="price" placeholder="💰 Prix (FCFA)" step="any" required>
                     </div>
+                    <!-- Indicateur de catégorie détectée -->
+                    <div id="cat-detect-banner" style="display:none; align-items:center; gap:10px; background:#f0fdf4; border:1.5px solid #22c55e; border-radius:12px; padding:10px 16px; margin-bottom:10px; font-size:0.88rem; font-weight:600; color:#166534; animation: fadeUp 0.3s ease;">
+                        <span id="cat-detect-icon" style="font-size:1.3rem;"></span>
+                        <span>Catégorie détectée : <strong id="cat-detect-label"></strong></span>
+                        <span style="margin-left:auto; font-size:0.75rem; color:#6b7280; font-weight:400;">✏️ Vous pouvez modifier</span>
+                    </div>
                     <div class="form-row">
-                        <select name="category" required style="flex:2;">
+                        <select id="category-select" name="category" required style="flex:2;">
                             <option value="" disabled selected>📂 Choisir une catégorie</option>
                             {% for cat in categories %}
                             <option value="{{ cat.id }}">{{ cat.emoji }} {{ cat.label }}</option>
@@ -1635,6 +2475,158 @@ if (catStats.length > 0 && document.getElementById('catBarChart')) {
         }
     });
 }
+// ============================================================
+// AUTO-DÉTECTION DE CATÉGORIE PAR MOTS-CLÉS
+// ============================================================
+const KEYWORDS = {
+  alimentaire: [
+    'tapioca','manioc','plantain','banane','igname','macabo','tomate','oignon','ail','gingembre',
+    'piment','poivre','sel','sucre','farine','riz','mais','maïs','soja','haricot','lentille',
+    'arachide','huile','viande','poisson','poulet','boeuf','porc','mouton','chevre','chèvre',
+    'oeuf','lait','yaourt','fromage','beurre','pain','biscuit','cafe','thé','the','jus',
+    'eau','boisson','biere','vin','ndole','eru','koki','mbongo','safou','mangue',
+    'avocat','ananas','orange','citron','papaye','goyave','noix','coco','palme',
+    'pistache','couscous','attieke','fufu','foufou','kondre','mbanga',
+    'sardine','crevette','crabe','tilapia','silure','capitaine',
+    'gombo','epinard','chou','carotte','concombre','aubergine','courgette',
+    'patate','pomme de terre','pasteque','melon','fraise',
+    'curcuma','cannelle','muscade','clou','laurier','thym','persil','basilic',
+    'cube','maggi','jumbo','moutarde','vinaigre','sauce','pate','spaghetti',
+    'vermicelle','arrowroot','sesame'
+  ],
+  construction: [
+    'ciment','sable','gravier','brique','parpaing','fer','acier','tole','bois',
+    'planche','poutre','dalle','carreau','tuile','peinture','enduit','colle','mortier',
+    'platre','gypse','marbre','granite','ceramique','mosaique',
+    'badigeon','laque','vernis','vitre','verre','aluminium','zinc','cuivre',
+    'tuyau','pvc','robinet','vanne','cable','fil electrique','interrupteur',
+    'prise','disjoncteur','plomberie','raccord','joint','coude',
+    'charniere','vis','clou','boulon','ecrou','rondelle','chevron',
+    'latte','contreplaque','agglomere','osb','beton',
+    'coffreur','coffrage','etai','echafaudage','escabeau','brouette'
+  ],
+  hygiene: [
+    'savon','shampoing','gel douche','deodorant','parfum','creme','crème',
+    'lotion','vaseline','pommade','baume','dentifrice','brosse','coton','compresse','pansement',
+    'mouchoir','papier toilette','serviette','couche','tampon','rasoir','lame',
+    'mousse raser','eye liner','fond teint','rouge','mascara','vernis','dissolvant',
+    'talc','antiseptique','alcool','detergent','lessive','javelle','javel','nettoyant',
+    'desinfectant','balai','serpilliere','eponge'
+  ],
+  electronique: [
+    'telephone','portable','smartphone','iphone','samsung','tecno','itel','infinix','huawei',
+    'xiaomi','oppo','nokia','chargeur','batterie','powerbank','ecouteur','casque',
+    'enceinte','bluetooth','television','tv','ecran','ordinateur','laptop','pc','tablette',
+    'clavier','souris','imprimante','scanner','cle usb','disque dur','memoire',
+    'carte sim','recharge','airtime','credit','modem','routeur','wifi','cable usb',
+    'adaptateur','multiprise','lampe','led','ampoule','torche','radio',
+    'lecteur','dvd','camera','montre','calculatrice','alarme'
+  ],
+  habillement: [
+    'chemise','pantalon','jean','robe','pagne','tissu','ankara','wax','kaba','boubou',
+    'caftan','djellaba','costume','veste','manteau','blouson','pull','tricot',
+    'tshirt','polo','short','jupe','legging','collant','slip','culotte',
+    'chaussette','bas','chaussure','basket','sandale','talon','botte','mocassin',
+    'chapeau','casquette','bonnet','echarpe','foulard','cravate','ceinture',
+    'sac','sacoche','cartable','valise','lunette','bijou','collier','bracelet','bague'
+  ],
+  agriculture: [
+    'semence','graine','engrais','pesticide','herbicide','insecticide','fongicide',
+    'compost','terreau','serre','arrosoir','pompe','pioche','beche','fourche',
+    'rateau','houe','machette','hache','scie','cisaille','secateur',
+    'plant','fertilisant','chaux','soufre','sulfate','nitrate','phosphate','potasse',
+    'uree','npk','tracteur','motoculteur','charrue','herse','semoir'
+  ],
+  sante: [
+    'medicament','comprime','capsule','sirop','injectable','seringue','perfusion',
+    'collyre','suppositoire','paracetamol','ibuprofene','amoxicilline','ampicilline',
+    'metronidazole','artemether','coartem','quinine','chloroquine','lumartem','artesunate',
+    'augmentin','ciprofloxacine','doxycycline','tetracycline','mebendazole','albendazole',
+    'omeprazole','ors','serum','vitamine','zinc','calcium','magnesium','multivitamine',
+    'pansement','bande','attelle','thermometre','tensiometre','glucometre',
+    'stethoscope','masque','gant latex'
+  ],
+  education: [
+    'cahier','carnet','bloc note','agenda','classeur','chemise cartable','stylo','bic',
+    'crayon','feutre','marqueur','surligneur','correcteur','tipp ex','gomme',
+    'taille crayon','regle','equerre','compas','rapporteur','calculatrice scolaire',
+    'dictionnaire','livre','manuel','scolaire','roman','encyclopedie','atlas',
+    'cahier dessin','pinceau','colle','ciseaux','trousse',
+    'agrafeuse','perforeuse','scotch','post it','tableau blanc','craie','ardoise',
+    'photocopie','ramette','papier a4'
+  ],
+  transport: [
+    'essence','gasoil','diesel','carburant','petrole','mazout','lubrifiant',
+    'huile moteur','filtre','bougie','plaquette frein',
+    'pneu','roue','chambre air','jante','batterie voiture','amortisseur','courroie',
+    'radiateur','lave glace','retroviseur','pare brise','phare','klaxon',
+    'billet transport','taxi','mototaxi','ticket bus','abonnement',
+    'peage','parking','assurance vehicule','vignette','immatriculation','carte grise'
+  ]
+};
+
+const CAT_META = {
+  alimentaire:  { label: 'Denrees alimentaires',  emoji: '🍎' },
+  construction: { label: 'Materiaux construction', emoji: '🧱' },
+  hygiene:      { label: 'Hygiene et beaute',      emoji: '🧴' },
+  electronique: { label: 'Electronique',           emoji: '📱' },
+  habillement:  { label: 'Habillement textile',    emoji: '👗' },
+  agriculture:  { label: 'Agriculture jardinage',  emoji: '🌾' },
+  sante:        { label: 'Sante pharmacie',        emoji: '💊' },
+  education:    { label: 'Education fournitures',  emoji: '📚' },
+  transport:    { label: 'Transport carburant',     emoji: '🚗' },
+  autre:        { label: 'Autre',                  emoji: '📦' },
+};
+
+function normalizeStr(s) {
+    return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+}
+
+function detectCategory(name) {
+    const n = normalizeStr(name);
+    for (const [cat, keywords] of Object.entries(KEYWORDS)) {
+        for (const kw of keywords) {
+            if (n.includes(normalizeStr(kw))) return cat;
+        }
+    }
+    return null;
+}
+
+const productInput = document.getElementById('product-input');
+const catSelect    = document.getElementById('category-select');
+const banner       = document.getElementById('cat-detect-banner');
+const bannerIcon   = document.getElementById('cat-detect-icon');
+const bannerLabel  = document.getElementById('cat-detect-label');
+let userManuallyChose = false;
+
+if (productInput && catSelect) {
+    productInput.addEventListener('input', () => {
+        if (userManuallyChose) return;
+        const val = productInput.value;
+        if (val.length < 2) { banner.style.display = 'none'; return; }
+        const detected = detectCategory(val);
+        if (detected) {
+            catSelect.value = detected;
+            const meta = CAT_META[detected];
+            bannerIcon.textContent  = meta.emoji;
+            bannerLabel.textContent = meta.emoji + ' ' + meta.label;
+            banner.style.display    = 'flex';
+        } else {
+            banner.style.display = 'none';
+        }
+    });
+    catSelect.addEventListener('change', () => {
+        userManuallyChose = true;
+        banner.style.display = 'none';
+    });
+    productInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && productInput.value.length <= 1) {
+            userManuallyChose = false;
+            banner.style.display = 'none';
+            catSelect.value = '';
+        }
+    });
+}
 </script>
 </body>
 </html>
@@ -1788,8 +2780,48 @@ def load_history_from_file():
     return history
 
 # ============ ROUTES FLASK ============
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    message   = None
+    form_data = {}
+    if request.method == 'POST':
+        nom        = request.form.get('nom', '').strip()
+        prenom     = request.form.get('prenom', '').strip()
+        telephone  = request.form.get('telephone', '').strip()
+        marche     = request.form.get('marche', '').strip()
+        form_data  = {
+            'nom':         nom,
+            'prenom':      prenom,
+            'ddn':         request.form.get('ddn', '').strip(),
+            'sexe':        request.form.get('sexe', '').strip(),
+            'telephone':   telephone,
+            'email':       request.form.get('email', '').strip(),
+            'quartier':    request.form.get('quartier', '').strip(),
+            'marche':      marche,
+            'date_visite': request.form.get('date_visite', '').strip(),
+            'budget':      request.form.get('budget', '').strip(),
+            'objectif':    request.form.get('objectif', '').strip(),
+        }
+        if not nom or not prenom or not telephone or not marche:
+            message = {'type': 'error', 'text': 'Veuillez remplir tous les champs obligatoires (Nom, Prénom, Téléphone, Marché).'}
+        else:
+            session['client']          = form_data
+            session['current_session'] = 'SESSION_001'
+            session['session_products'] = []
+            session['session_counter'] = 1
+            session.modified = True
+            return redirect(url_for('home'))
+    return render_template_string(
+        REGISTER_HTML,
+        markets=MARKETS_YAOUNDE,
+        message=message,
+        form_data=form_data
+    )
+
 @app.route('/')
 def home():
+    if 'client' not in session:
+        return redirect(url_for('register'))
     if 'current_session' not in session:
         session['current_session'] = 'SESSION_001'
     if 'session_products' not in session:
@@ -1820,6 +2852,7 @@ def home():
     history = load_history_from_file()
     popular_products = get_popular_products()
     cat_stats_data   = get_cat_stats()
+    client = session.get('client', {})
     return render_template_string(HTML,
         session_id=session_id,
         session_count=len(session_products),
@@ -1830,6 +2863,7 @@ def home():
         categories=CATEGORIES,
         cat_map=CAT_MAP,
         cat_stats=cat_stats_data,
+        client=client,
     )
 
 @app.route('/add', methods=['POST'])
@@ -1885,9 +2919,13 @@ def end_session():
             session['session_products'],
             datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         )
-    session['session_products'] = []
+    # Réinitialiser la session et retourner à l'accueil d'enregistrement
+    session.pop('client', None)
+    session.pop('current_session', None)
+    session.pop('session_products', None)
+    session.pop('session_counter', None)
     session.modified = True
-    return home()
+    return redirect(url_for('register'))
 
 @app.route('/load_session', methods=['POST'])
 def load_session():
@@ -1899,6 +2937,11 @@ def load_session():
             session.modified = True
             break
     return home()
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('register'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
